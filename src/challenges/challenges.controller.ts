@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -18,8 +20,8 @@ export class ChallengesController {
   constructor(private readonly challengesService: ChallengesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all challenges.' })
-  @ApiOkResponse({ type: [ChallengeEntity] })
+  @ApiOperation({ summary: 'List active challenges.' })
+  @ApiOkResponse({ description: 'Active challenges retrieved successfully.', type: [ChallengeEntity] })
   findAll(): Promise<ChallengeEntity[]> {
     return this.challengesService.findAll();
   }
@@ -27,15 +29,30 @@ export class ChallengesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get challenge details.' })
   @ApiParam({ name: 'id', description: 'Challenge identifier.' })
-  @ApiOkResponse({ type: ChallengeEntity })
+  @ApiOkResponse({ description: 'Challenge retrieved successfully.', type: ChallengeEntity })
+  @ApiNotFoundResponse({ description: 'Challenge not found.' })
   findOne(@Param('id') id: string): Promise<ChallengeEntity> {
     return this.challengesService.findOne(id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create challenge.' })
-  @ApiBody({ type: CreateChallengeDto })
-  @ApiCreatedResponse({ type: ChallengeEntity })
+  @ApiBody({
+    type: CreateChallengeDto,
+    examples: {
+      example1: {
+        summary: 'Create a new challenge',
+        value: {
+          title: 'Build authentication flow',
+          description: 'Implement user authentication with JWT and Prisma.',
+          difficulty: 'MEDIUM',
+          category: 'Backend',
+        },
+      },
+    },
+  })
+  @ApiCreatedResponse({ description: 'Challenge created successfully.', type: ChallengeEntity })
+  @ApiBadRequestResponse({ description: 'Validation error or invalid request.' })
   create(@Body() createChallengeDto: CreateChallengeDto): Promise<ChallengeEntity> {
     return this.challengesService.create(createChallengeDto);
   }
@@ -44,7 +61,9 @@ export class ChallengesController {
   @ApiOperation({ summary: 'Update challenge.' })
   @ApiParam({ name: 'id', description: 'Challenge identifier.' })
   @ApiBody({ type: UpdateChallengeDto })
-  @ApiOkResponse({ type: ChallengeEntity })
+  @ApiOkResponse({ description: 'Challenge updated successfully.', type: ChallengeEntity })
+  @ApiNotFoundResponse({ description: 'Challenge not found.' })
+  @ApiBadRequestResponse({ description: 'Validation error or invalid request.' })
   update(
     @Param('id') id: string,
     @Body() updateChallengeDto: UpdateChallengeDto,
@@ -55,8 +74,9 @@ export class ChallengesController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete challenge.' })
   @ApiParam({ name: 'id', description: 'Challenge identifier.' })
-  @ApiOkResponse({ description: 'Challenge deletion placeholder.' })
-  remove(@Param('id') id: string): Promise<{ id: string }> {
+  @ApiOkResponse({ description: 'Challenge deleted successfully.', schema: { example: { message: 'Challenge deleted successfully' } } })
+  @ApiNotFoundResponse({ description: 'Challenge not found.' })
+  remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.challengesService.remove(id);
   }
 }
