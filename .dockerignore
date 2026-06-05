@@ -1,0 +1,15 @@
+diff --git a/.dockerignore b/.dockerignore
+new file mode 100644
+index 0000000000000000000000000000000000000000..757ef94fc53da0d22a4dd2644f546f7742155411
+--- /dev/null
++++ b/.dockerignore
+@@ -0,0 +1,9 @@
++node_modules
++dist
++.git
++.env
++coverage
++npm-debug.log*
++Dockerfile
++docker-compose.yml
++README
