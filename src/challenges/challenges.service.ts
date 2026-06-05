@@ -1,51 +1,66 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
-import { ChallengeEntity, Difficulty } from './entities/challenge.entity';
+import { ChallengeEntity } from './entities/challenge.entity';
 
 @Injectable()
 export class ChallengesService {
-  findAll(): Promise<ChallengeEntity[]> {
-    return Promise.resolve([]);
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
-  findOne(id: string): Promise<ChallengeEntity> {
-    return Promise.resolve({
-      id,
-      title: 'Sample Challenge',
-      description: 'This is a placeholder challenge description.',
-      difficulty: Difficulty.EASY,
-      category: 'General',
-      is_active: true,
-      created_at: new Date(),
-      updated_at: new Date(),
+  async create(createChallengeDto: CreateChallengeDto): Promise<ChallengeEntity> {
+    const challenge = await this.prisma.challenge.create({
+      data: {
+        ...createChallengeDto,
+        is_active: true,
+      },
     });
+
+    return challenge as ChallengeEntity;
   }
 
-  create(createChallengeDto: CreateChallengeDto): Promise<ChallengeEntity> {
-    return Promise.resolve({
-      id: '00000000-0000-0000-0000-000000000000',
-      ...createChallengeDto,
-      is_active: true,
-      created_at: new Date(),
-      updated_at: new Date(),
+  async findAll(): Promise<ChallengeEntity[]> {
+    const challenges = await this.prisma.challenge.findMany({
+      where: { is_active: true },
+      orderBy: { created_at: 'desc' },
     });
+
+    return challenges as ChallengeEntity[];
   }
 
-  update(id: string, updateChallengeDto: UpdateChallengeDto): Promise<ChallengeEntity> {
-    return Promise.resolve({
-      id,
-      title: updateChallengeDto.title ?? 'Updated Challenge Title',
-      description: updateChallengeDto.description ?? 'Updated placeholder description.',
-      difficulty: updateChallengeDto.difficulty ?? Difficulty.EASY,
-      category: updateChallengeDto.category ?? 'General',
-      is_active: true,
-      created_at: new Date(),
-      updated_at: new Date(),
+  async findOne(id: string): Promise<ChallengeEntity> {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id },
     });
+
+    if (!challenge || !challenge.is_active) {
+      throw new NotFoundException('Challenge not found.');
+    }
+
+    return challenge as ChallengeEntity;
   }
 
-  remove(id: string): Promise<{ id: string }> {
-    return Promise.resolve({ id });
+  async update(id: string, updateChallengeDto: UpdateChallengeDto): Promise<ChallengeEntity> {
+    await this.findOne(id);
+
+    const updated = await this.prisma.challenge.update({
+      where: { id },
+      data: {
+        ...updateChallengeDto,
+      },
+    });
+
+    return updated as ChallengeEntity;
+  }
+
+  async remove(id: string): Promise<{ message: string }> {
+    await this.findOne(id);
+
+    await this.prisma.challenge.update({
+      where: { id },
+      data: { is_active: false },
+    });
+
+    return { message: 'Challenge deleted successfully' };
   }
 }
