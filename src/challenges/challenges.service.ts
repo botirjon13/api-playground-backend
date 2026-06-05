@@ -1,8 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
+import { QueryChallengesDto } from './dto/query-challenges.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import { ChallengeEntity } from './entities/challenge.entity';
+
+export interface PaginatedResult {
+  data: ChallengeEntity[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 @Injectable()
 export class ChallengesService {
@@ -19,13 +31,77 @@ export class ChallengesService {
     return challenge as ChallengeEntity;
   }
 
-  async findAll(): Promise<ChallengeEntity[]> {
-    const challenges = await this.prisma.challenge.findMany({
-      where: { is_active: true },
-      orderBy: { created_at: 'desc' },
-    });
+  async findAll(query: QueryChallengesDto): Promise<PaginatedResult> {
+    const {
+      page = 1,
+      limit = 10,
+      difficulty,
+      category,
+      search,
+      sort = 'desc',
+    } = query;
 
-    return challenges as ChallengeEntity[];
+    // Build dynamic where condition
+    const where: Prisma.ChallengeWhereInput = {
+      is_active: true,
+    };
+
+    // Add difficulty filter
+    if (difficulty) {
+      where.difficulty = difficulty;
+    }
+
+    // Add category filter (case-insensitive)
+    if (category) {
+      where.category = {
+        contains: category,
+        mode: 'insensitive',
+      };
+    }
+
+    // Add search filter (search in title and description)
+    if (search) {
+      where.OR = [
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Execute queries in parallel
+    const [challenges, total] = await Promise.all([
+      this.prisma.challenge.findMany({
+        where,
+        orderBy: { created_at: sort === 'asc' ? 'asc' : 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.challenge.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: challenges as ChallengeEntity[],
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   async findOne(id: string): Promise<ChallengeEntity> {
