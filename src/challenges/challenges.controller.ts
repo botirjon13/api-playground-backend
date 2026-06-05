@@ -1,15 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
+import { Roles } from '../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 import { ChallengesService } from './challenges.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { PaginatedChallengesResponseDto } from './dto/paginated-challenges-response.dto';
@@ -88,7 +95,10 @@ export class ChallengesController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create challenge.' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create challenge (ADMIN only).' })
   @ApiBody({
     type: CreateChallengeDto,
     examples: {
@@ -104,16 +114,23 @@ export class ChallengesController {
     },
   })
   @ApiCreatedResponse({ description: 'Challenge created successfully.', type: ChallengeEntity })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token.' })
+  @ApiForbiddenResponse({ description: 'Only ADMIN users can create challenges.' })
   @ApiBadRequestResponse({ description: 'Validation error or invalid request.' })
   create(@Body() createChallengeDto: CreateChallengeDto): Promise<ChallengeEntity> {
     return this.challengesService.create(createChallengeDto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update challenge.' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update challenge (ADMIN only).' })
   @ApiParam({ name: 'id', description: 'Challenge identifier.' })
   @ApiBody({ type: UpdateChallengeDto })
   @ApiOkResponse({ description: 'Challenge updated successfully.', type: ChallengeEntity })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token.' })
+  @ApiForbiddenResponse({ description: 'Only ADMIN users can update challenges.' })
   @ApiNotFoundResponse({ description: 'Challenge not found.' })
   @ApiBadRequestResponse({ description: 'Validation error or invalid request.' })
   update(
@@ -124,9 +141,14 @@ export class ChallengesController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete challenge.' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete challenge (ADMIN only).' })
   @ApiParam({ name: 'id', description: 'Challenge identifier.' })
   @ApiOkResponse({ description: 'Challenge deleted successfully.', schema: { example: { message: 'Challenge deleted successfully' } } })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT token.' })
+  @ApiForbiddenResponse({ description: 'Only ADMIN users can delete challenges.' })
   @ApiNotFoundResponse({ description: 'Challenge not found.' })
   remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.challengesService.remove(id);
