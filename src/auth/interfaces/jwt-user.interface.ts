@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Role } from '@prisma/client';
 
-@Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {}
+export interface JwtUser {
+  sub: string;
+  email: string;
+  role: Role;
+}
