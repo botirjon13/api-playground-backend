@@ -2,10 +2,10 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
 
 class HealthResponseDto {
-  @ApiProperty({ example: 'ok' })
+  @ApiProperty({ example: 'ok', description: 'Health status.' })
   status!: 'ok';
 
-  @ApiProperty({ example: '2026-01-01T00:00:00.000Z' })
+  @ApiProperty({ example: '2026-01-01T00:00:00.000Z', description: 'Timestamp when health status was generated.' })
   timestamp!: string;
 }
 

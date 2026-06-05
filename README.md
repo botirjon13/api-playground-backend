@@ -146,6 +146,14 @@ Swagger/OpenAPI documentation is available at:
 http://localhost:3000/api/docs
 ```
 
+This platform supports:
+
+- English
+- Russian
+- Uzbek
+
+Educational multilingual documentation is available in this README.
+
 Use the **Authorize** button with a token from `/auth/login`:
 
 ```text
