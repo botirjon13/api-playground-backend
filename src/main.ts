@@ -29,7 +29,11 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('API Playground Platform')
     .setDescription(
-      'Backend API for developers to practice REST APIs, authentication, validation, and integrations.',
+      `This platform supports:\n` +
+      `- English\n` +
+      `- Russian\n` +
+      `- Uzbek\n\n` +
+      `Educational multilingual documentation is available in README.`,
     )
     .setVersion('0.0.1')
     .addBearerAuth(
