@@ -12,8 +12,8 @@ export class UserResponseDto {
   role!: Role;
 
   @ApiProperty({ example: '2026-01-01T00:00:00.000Z' })
-  created_at!: Date;
+  createdAt!: Date;
 
   @ApiProperty({ example: '2026-01-01T00:00:00.000Z' })
-  updated_at!: Date;
+  updatedAt!: Date;
 }
