@@ -22,7 +22,7 @@ export class AuthService {
     try {
       const user = await this.usersService.create({
         email: registerDto.email.toLowerCase(),
-        password_hash: passwordHash,
+        passwordHash: passwordHash,
       });
 
       return {
