@@ -16,26 +16,43 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<Pick<User, 'id' | 'email'>> {
-    const passwordHash = await bcrypt.hash(registerDto.password, this.saltRounds);
+async register(
+  registerDto: RegisterDto,
+): Promise<{ access_token: string }> {
+  const passwordHash = await bcrypt.hash(
+    registerDto.password,
+    this.saltRounds,
+  );
 
-    try {
-      const user = await this.usersService.create({
-        email: registerDto.email.toLowerCase(),
-        passwordHash: passwordHash,
-      });
+  try {
+    const user = await this.usersService.create({
+      email: registerDto.email.toLowerCase(),
+      fullName: registerDto.fullName,
+      passwordHash: passwordHash,
+    });
 
-      return {
-        id: user.id,
-        email: user.email,
-      };
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException('A user with this email already exists');
-      }
-      throw error;
+    const payload: JwtUser = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      throw new ConflictException(
+        'A user with this email already exists',
+      );
     }
+
+    throw error;
   }
+}
 
   async login(loginDto: LoginDto): Promise<{ access_token: string }> {
     const user = await this.usersService.findByEmail(loginDto.email.toLowerCase());
