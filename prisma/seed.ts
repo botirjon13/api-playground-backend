@@ -21,7 +21,7 @@ async function main() {
     const admin = await prisma.user.create({
       data: {
         email: 'admin@apiplayground.local',
-        password_hash: hashedPassword,
+        passwordHash: hashedPassword,
         role: Role.ADMIN,
       },
     });
@@ -44,7 +44,7 @@ async function main() {
     const student = await prisma.user.create({
       data: {
         email: 'student@apiplayground.local',
-        password_hash: hashedPassword,
+        passwordHash: hashedPassword,
         role: Role.STUDENT,
       },
     });
