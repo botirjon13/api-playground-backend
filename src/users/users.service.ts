@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
-export type SafeUser = Omit<User, 'password_hash'>;
+export type SafeUser = Omit<User, 'passwordHash'>;
 
 @Injectable()
 export class UsersService {
