@@ -140,6 +140,13 @@ export class ChallengesController {
     return this.challengesService.update(id, updateChallengeDto);
   }
 
+  @Post('complete/mission1')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Complete Mission #1 and earn XP.' })
+  completeMission1() {
+    return this.challengesService.completeMission1();
+  }
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
