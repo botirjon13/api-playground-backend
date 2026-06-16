@@ -17,6 +17,7 @@ async function bootstrap() {
   app.use(
     helmet({
       frameguard: false,
+      contentSecurityPolicy: false,
     }),
   );
   app.useGlobalPipes(
