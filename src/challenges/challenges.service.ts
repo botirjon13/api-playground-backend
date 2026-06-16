@@ -139,4 +139,40 @@ export class ChallengesService {
 
     return { message: 'Challenge deleted successfully' };
   }
+    async completeMission1(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.mission1) {
+      return {
+        success: false,
+        message: 'Mission already completed',
+      };
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        mission1: true,
+        xp: {
+          increment: 10,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      xp: updatedUser.xp,
+      mission1: updatedUser.mission1,
+    };
+  }
 }
