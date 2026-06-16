@@ -1,3 +1,4 @@
+import { Req } from '@nestjs/common';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -139,13 +140,12 @@ export class ChallengesController {
   ): Promise<ChallengeEntity> {
     return this.challengesService.update(id, updateChallengeDto);
   }
-
   @Post('complete/mission1')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Complete Mission #1 and earn XP.' })
-  completeMission1() {
-    return this.challengesService.completeMission1();
+  @ApiOperation({ summary: 'Complete Mission #1 and earn 10 XP' })
+  completeMission1(@Req() req: any) {
+    return this.challengesService.completeMission1(req.user.id);
   }
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
