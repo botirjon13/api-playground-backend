@@ -27,6 +27,10 @@ model User {
   passwordHash String   @map("password_hash")
   role         Role     @default(STUDENT)
 
+  xp           Int      @default(0)
+
+  mission1     Boolean  @default(false) @map("mission_1")
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
