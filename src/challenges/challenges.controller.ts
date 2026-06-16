@@ -145,7 +145,7 @@ export class ChallengesController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Complete Mission #1 and earn 10 XP' })
   completeMission1(@Req() req: any) {
-    return this.challengesService.completeMission1(req.user.id);
+    return this.challengesService.completeMission1(req.user.sub);
   }
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
