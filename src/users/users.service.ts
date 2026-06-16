@@ -24,6 +24,10 @@ export class UsersService {
         email: true,
         fullName: true,
         role: true,
+        
+        xp: true,
+        mission1: true,
+        
         createdAt: true,
         updatedAt: true,
       },
