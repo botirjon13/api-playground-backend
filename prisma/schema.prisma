@@ -40,7 +40,7 @@ enum Difficulty {
 }
 
 model User {
-  id    String @id @default(uuid()) @db.Uuid
+  id    String @id @default(uuid())
   email String @unique
 
   fullName String? @map("full_name")
@@ -82,7 +82,7 @@ model Challenge {
 model Submission {
   id String @id @default(uuid()) @db.Uuid
 
-  userId      String @map("user_id") @db.Uuid
+  userId      String @map("user_id")
   challengeId String @map("challenge_id") @db.Uuid
 
   githubUrl   String? @map("github_url")
@@ -106,8 +106,8 @@ model Course {
   priceCents              Int?                    @map("price_cents")
   status                  CourseStatus            @default(DRAFT)
   practicalPlatformStatus PracticalPlatformStatus @default(NOT_REQUESTED) @map("practical_platform_status")
-  instructorId            String?                 @map("instructor_id") @db.Uuid
-  approvedById            String?                 @map("approved_by_id") @db.Uuid
+  instructorId            String?                 @map("instructor_id")
+  approvedById            String?                 @map("approved_by_id")
   publishedAt             DateTime?               @map("published_at")
   createdAt               DateTime                @default(now()) @map("created_at")
   updatedAt               DateTime                @updatedAt @map("updated_at")
@@ -121,7 +121,7 @@ model Course {
 }
 
 model CourseEnrollment {
-  userId     String           @map("user_id") @db.Uuid
+  userId     String           @map("user_id")
   courseId   String           @map("course_id") @db.Uuid
   status     EnrollmentStatus @default(ACTIVE)
   enrolledAt DateTime         @default(now()) @map("enrolled_at")

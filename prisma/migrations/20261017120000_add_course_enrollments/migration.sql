@@ -27,8 +27,8 @@ CREATE TABLE "courses" (
     "price_cents" INTEGER,
     "status" "CourseStatus" NOT NULL DEFAULT 'DRAFT',
     "practical_platform_status" "PracticalPlatformStatus" NOT NULL DEFAULT 'NOT_REQUESTED',
-    "instructor_id" UUID,
-    "approved_by_id" UUID,
+    "instructor_id" TEXT,
+    "approved_by_id" TEXT,
     "published_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE "courses" (
 );
 
 CREATE TABLE "course_enrollments" (
-    "user_id" UUID NOT NULL,
+    "user_id" TEXT NOT NULL,
     "course_id" UUID NOT NULL,
     "status" "EnrollmentStatus" NOT NULL DEFAULT 'ACTIVE',
     "enrolled_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
