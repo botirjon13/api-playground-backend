@@ -8,6 +8,7 @@ import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { ChallengesModule } from './challenges/challenges.module';
+import { CoursesModule } from './courses/courses.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ChallengesModule } from './challenges/challenges.module';
     UsersModule,
     HealthModule,
     ChallengesModule,
+    CoursesModule,
   ],
 })
 export class AppModule implements NestModule {

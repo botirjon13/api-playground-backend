@@ -9,7 +9,28 @@ datasource db {
 
 enum Role {
   ADMIN
+  MODERATOR
   STUDENT
+}
+
+enum CourseStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  REJECTED
+}
+
+enum PracticalPlatformStatus {
+  NOT_REQUESTED
+  REQUESTED
+  APPROVED
+  REJECTED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
 }
 
 enum Difficulty {
@@ -19,36 +40,39 @@ enum Difficulty {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
+  id    String @id @default(uuid()) @db.Uuid
+  email String @unique
 
-  fullName     String?  @map("full_name")
+  fullName String? @map("full_name")
 
-  passwordHash String   @map("password_hash")
-  role         Role     @default(STUDENT)
+  passwordHash String @map("password_hash")
+  role         Role   @default(STUDENT)
 
-  xp           Int      @default(0)
+  xp Int @default(0)
 
-  mission1     Boolean  @default(false) @map("mission_1")
+  mission1 Boolean @default(false) @map("mission_1")
 
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  submissions  Submission[]
+  submissions       Submission[]
+  coursesCreated    Course[]           @relation("CourseCreator")
+  coursesApproved   Course[]           @relation("CourseApprover")
+  courseEnrollments CourseEnrollment[]
 
   @@map("users")
 }
 
 model Challenge {
-  id          String       @id @default(uuid()) @db.Uuid
+  id          String     @id @default(uuid()) @db.Uuid
   title       String
   description String
   difficulty  Difficulty
   category    String
-  is_active   Boolean      @default(true)
+  is_active   Boolean    @default(true)
 
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   submissions Submission[]
 
@@ -56,18 +80,56 @@ model Challenge {
 }
 
 model Submission {
-  id            String    @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  userId        String    @map("user_id")
-  challengeId   String    @map("challenge_id")
+  userId      String @map("user_id") @db.Uuid
+  challengeId String @map("challenge_id") @db.Uuid
 
-  githubUrl     String?   @map("github_url")
-  deployedUrl   String?   @map("deployed_url")
+  githubUrl   String? @map("github_url")
+  deployedUrl String? @map("deployed_url")
 
-  createdAt     DateTime  @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user          User      @relation(fields: [userId], references: [id])
-  challenge     Challenge @relation(fields: [challengeId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  challenge Challenge @relation(fields: [challengeId], references: [id])
 
   @@map("submissions")
+}
+
+model Course {
+  id                      String                  @id @default(uuid()) @db.Uuid
+  slug                    String                  @unique
+  title                   String
+  description             String
+  level                   String
+  isFree                  Boolean                 @default(true) @map("is_free")
+  priceCents              Int?                    @map("price_cents")
+  status                  CourseStatus            @default(DRAFT)
+  practicalPlatformStatus PracticalPlatformStatus @default(NOT_REQUESTED) @map("practical_platform_status")
+  instructorId            String?                 @map("instructor_id") @db.Uuid
+  approvedById            String?                 @map("approved_by_id") @db.Uuid
+  publishedAt             DateTime?               @map("published_at")
+  createdAt               DateTime                @default(now()) @map("created_at")
+  updatedAt               DateTime                @updatedAt @map("updated_at")
+
+  instructor  User?              @relation("CourseCreator", fields: [instructorId], references: [id], onDelete: SetNull)
+  approvedBy  User?              @relation("CourseApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  enrollments CourseEnrollment[]
+
+  @@index([status])
+  @@map("courses")
+}
+
+model CourseEnrollment {
+  userId     String           @map("user_id") @db.Uuid
+  courseId   String           @map("course_id") @db.Uuid
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime         @default(now()) @map("enrolled_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, courseId])
+  @@index([courseId])
+  @@map("course_enrollments")
 }

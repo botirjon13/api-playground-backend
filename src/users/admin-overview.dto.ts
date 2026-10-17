@@ -8,6 +8,9 @@ export class AdminOverviewStatsDto {
   @ApiProperty({ example: 2 })
   admins!: number;
 
+  @ApiProperty({ example: 0 })
+  moderators!: number;
+
   @ApiProperty({ example: 123 })
   students!: number;
 

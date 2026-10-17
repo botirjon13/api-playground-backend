@@ -18,10 +18,11 @@ export class UsersService {
   }
 
   async getAdminOverview(): Promise<AdminOverviewDto> {
-    const [totalUsers, admins, students, mission1Completed, xp, recentStudents] = await Promise.all(
-      [
+    const [totalUsers, admins, moderators, students, mission1Completed, xp, recentStudents] =
+      await Promise.all([
         this.prisma.user.count(),
         this.prisma.user.count({ where: { role: Role.ADMIN } }),
+        this.prisma.user.count({ where: { role: Role.MODERATOR } }),
         this.prisma.user.count({ where: { role: Role.STUDENT } }),
         this.prisma.user.count({
           where: { role: Role.STUDENT, mission1: true },
@@ -41,13 +42,13 @@ export class UsersService {
             createdAt: true,
           },
         }),
-      ],
-    );
+      ]);
 
     return {
       stats: {
         totalUsers,
         admins,
+        moderators,
         students,
         mission1Completed,
         totalXp: xp._sum.xp ?? 0,
