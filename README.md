@@ -47,6 +47,7 @@ api-playground-backend/
 - Swagger/OpenAPI documentation at `/api/docs` with bearer authentication.
 - Docker and Docker Compose setup for local PostgreSQL + backend.
 - Render deployment-friendly production start command.
+- Authenticated support tickets, ticket conversations, and instructor applications with administrator review.
 
 ## API Endpoints
 
@@ -57,6 +58,12 @@ api-playground-backend/
 | `GET` | `/auth/profile` | Bearer JWT | Return the current authenticated user. |
 | `GET` | `/users/me` | Bearer JWT | Return the authenticated user's profile. |
 | `GET` | `/health` | Public | Return service health status. |
+
+## Support Ticket Workflow
+
+Authenticated users can submit a support ticket or instructor application. Ticket categories include technical issues, course questions, suggestions, feedback, and other requests. Instructor applications collect a specialty, relevant experience, and a proposed course.
+
+Users can only access their own tickets. Administrators can review instructor applications and update their status; moderators can access regular support tickets but cannot view instructor applications. A staff reply closes a regular ticket. For an instructor application, the administrator can request more information; the applicant's reply returns it to review. Approving an application does not automatically grant moderator access or publish a course.
 
 ## Installation
 

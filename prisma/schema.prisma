@@ -39,6 +39,24 @@ enum Difficulty {
   HARD
 }
 
+enum TicketCategory {
+  INSTRUCTOR_APPLICATION
+  TECHNICAL_ISSUE
+  COURSE_QUESTION
+  SUGGESTION
+  FEEDBACK
+  OTHER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_REVIEW
+  NEEDS_INFORMATION
+  CLOSED
+  APPROVED
+  REJECTED
+}
+
 model User {
   id    String @id @default(uuid())
   email String @unique
@@ -56,9 +74,11 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   submissions       Submission[]
-  coursesCreated    Course[]           @relation("CourseCreator")
-  coursesApproved   Course[]           @relation("CourseApprover")
+  coursesCreated    Course[]               @relation("CourseCreator")
+  coursesApproved   Course[]               @relation("CourseApprover")
   courseEnrollments CourseEnrollment[]
+  supportTickets    SupportTicket[]        @relation("SupportTicketRequester")
+  ticketMessages    SupportTicketMessage[] @relation("SupportTicketMessageSender")
 
   @@map("users")
 }
@@ -132,4 +152,39 @@ model CourseEnrollment {
   @@id([userId, courseId])
   @@index([courseId])
   @@map("course_enrollments")
+}
+
+model SupportTicket {
+  id                   String         @id @default(uuid()) @db.Uuid
+  userId               String         @map("user_id")
+  category             TicketCategory
+  status               TicketStatus   @default(OPEN)
+  subject              String         @db.VarChar(120)
+  instructorSpecialty  String?        @map("instructor_specialty") @db.VarChar(160)
+  instructorExperience String?        @map("instructor_experience") @db.Text
+  instructorPortfolio  String?        @map("instructor_portfolio") @db.VarChar(2048)
+  instructorCourseIdea String?        @map("instructor_course_idea") @db.Text
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  requester User                   @relation("SupportTicketRequester", fields: [userId], references: [id], onDelete: Cascade)
+  messages  SupportTicketMessage[]
+
+  @@index([userId, updatedAt])
+  @@index([category, status, updatedAt])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  senderId  String   @map("sender_id")
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender User          @relation("SupportTicketMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@map("support_ticket_messages")
 }
