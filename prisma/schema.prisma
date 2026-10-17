@@ -77,6 +77,7 @@ model User {
   coursesCreated    Course[]               @relation("CourseCreator")
   coursesApproved   Course[]               @relation("CourseApprover")
   courseEnrollments CourseEnrollment[]
+  coursesPublished  Course[]               @relation("CoursePublisher")
   supportTickets    SupportTicket[]        @relation("SupportTicketRequester")
   ticketMessages    SupportTicketMessage[] @relation("SupportTicketMessageSender")
 
@@ -128,16 +129,51 @@ model Course {
   practicalPlatformStatus PracticalPlatformStatus @default(NOT_REQUESTED) @map("practical_platform_status")
   instructorId            String?                 @map("instructor_id")
   approvedById            String?                 @map("approved_by_id")
+  publishedById           String?                 @map("published_by_id")
+  reviewFeedback          String?                 @map("review_feedback") @db.Text
   publishedAt             DateTime?               @map("published_at")
   createdAt               DateTime                @default(now()) @map("created_at")
   updatedAt               DateTime                @updatedAt @map("updated_at")
 
   instructor  User?              @relation("CourseCreator", fields: [instructorId], references: [id], onDelete: SetNull)
   approvedBy  User?              @relation("CourseApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  publishedBy User?              @relation("CoursePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
   enrollments CourseEnrollment[]
+  lessons     CourseLesson[]
 
   @@index([status])
   @@map("courses")
+}
+
+model CourseLesson {
+  id        String   @id @default(uuid()) @db.Uuid
+  courseId  String   @map("course_id") @db.Uuid
+  title     String   @db.VarChar(160)
+  content   String   @db.Text
+  videoUrl  String?  @map("video_url") @db.VarChar(2048)
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  resources CourseResource[]
+
+  @@unique([courseId, position])
+  @@index([courseId, position])
+  @@map("course_lessons")
+}
+
+model CourseResource {
+  id       String @id @default(uuid()) @db.Uuid
+  lessonId String @map("lesson_id") @db.Uuid
+  title    String @db.VarChar(160)
+  url      String @db.VarChar(2048)
+  position Int
+
+  lesson CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId, position])
+  @@map("course_resources")
 }
 
 model CourseEnrollment {

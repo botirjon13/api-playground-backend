@@ -48,22 +48,31 @@ api-playground-backend/
 - Docker and Docker Compose setup for local PostgreSQL + backend.
 - Render deployment-friendly production start command.
 - Authenticated support tickets, ticket conversations, and instructor applications with administrator review.
+- Moderator-managed course drafts, lesson materials, and administrator-controlled publication.
 
 ## API Endpoints
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `POST` | `/auth/register` | Public | Register a new student account. |
-| `POST` | `/auth/login` | Public | Login and receive a JWT access token. |
-| `GET` | `/auth/profile` | Bearer JWT | Return the current authenticated user. |
-| `GET` | `/users/me` | Bearer JWT | Return the authenticated user's profile. |
-| `GET` | `/health` | Public | Return service health status. |
+| Method | Path             | Auth       | Description                              |
+| ------ | ---------------- | ---------- | ---------------------------------------- |
+| `POST` | `/auth/register` | Public     | Register a new student account.          |
+| `POST` | `/auth/login`    | Public     | Login and receive a JWT access token.    |
+| `GET`  | `/auth/profile`  | Bearer JWT | Return the current authenticated user.   |
+| `GET`  | `/users/me`      | Bearer JWT | Return the authenticated user's profile. |
+| `GET`  | `/health`        | Public     | Return service health status.            |
 
 ## Support Ticket Workflow
 
 Authenticated users can submit a support ticket or instructor application. Ticket categories include technical issues, course questions, suggestions, feedback, and other requests. Instructor applications collect a specialty, relevant experience, and a proposed course.
 
-Users can only access their own tickets. Administrators can review instructor applications and update their status; moderators can access regular support tickets but cannot view instructor applications. A staff reply closes a regular ticket. For an instructor application, the administrator can request more information; the applicant's reply returns it to review. Approving an application does not automatically grant moderator access or publish a course.
+Users can only access their own tickets. Administrators can review instructor applications and update their status; moderators can access regular support tickets but cannot view instructor applications. A staff reply closes a regular ticket. For an instructor application, the administrator can request more information; the applicant's reply returns it to review. Approving an application grants the `MODERATOR` role; the user must sign out and sign in again to refresh their session.
+
+## Instructor and Course Workflow
+
+Moderators can create and edit their own draft courses, add ordered lesson text, YouTube video links, and Google Drive resource links, then submit a complete course for administrator review. Native file uploads are not configured.
+
+Administrators can approve a submitted course, return it for changes with feedback, and publish an approved course as a separate action. Only published courses appear in the public course list. Lesson text and resource links are returned only to enrolled learners.
+
+Course management endpoints are under `/courses/manage`: staff can list manageable courses, moderators can create/edit/submit drafts, and administrators can update review status. Public course detail is available at `GET /courses/:slug`; enrolled course lessons are available at `GET /courses/:slug/content`.
 
 ## Installation
 

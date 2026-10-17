@@ -30,6 +30,10 @@ export class SupportService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(user: JwtUser, input: CreateTicketDto) {
+    if (user.role === Role.ADMIN) {
+      throw new ForbiddenException('Administrators manage support tickets from the support inbox.');
+    }
+
     if (input.category === TicketCategory.INSTRUCTOR_APPLICATION) {
       if (
         !input.instructorSpecialty ||
@@ -166,9 +170,20 @@ export class SupportService {
       );
     }
 
-    await this.prisma.supportTicket.update({
-      where: { id: ticketId },
-      data: { status: input.status },
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.supportTicket.update({
+        where: { id: ticketId },
+        data: { status: input.status },
+      });
+      if (
+        ticket.category === TicketCategory.INSTRUCTOR_APPLICATION &&
+        input.status === TicketStatus.APPROVED
+      ) {
+        await transaction.user.update({
+          where: { id: ticket.userId },
+          data: { role: Role.MODERATOR },
+        });
+      }
     });
     return this.findOne(user, ticketId);
   }

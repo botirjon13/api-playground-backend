@@ -40,6 +40,7 @@ export class SupportController {
   @Post()
   @ApiOperation({ summary: 'Create a support ticket or instructor application.' })
   @ApiCreatedResponse({ description: 'Ticket created with its opening message.' })
+  @ApiForbiddenResponse({ description: 'Administrators cannot create support tickets.' })
   create(@CurrentUser() user: JwtUser, @Body() input: CreateTicketDto) {
     return this.supportService.create(user, input);
   }
