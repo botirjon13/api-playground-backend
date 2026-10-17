@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminOverviewDto } from './admin-overview.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 export type SafeUser = Omit<User, 'passwordHash'>;
 
@@ -77,5 +78,22 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async updateProfile(id: string, input: UpdateProfileDto): Promise<SafeUser> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { fullName: input.fullName.trim() },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        xp: true,
+        mission1: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 }

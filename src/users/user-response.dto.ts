@@ -8,6 +8,9 @@ export class UserResponseDto {
   @ApiProperty({ example: 'user@example.com' })
   email!: string;
 
+  @ApiProperty({ example: 'Ilhomjon Ergashev', nullable: true })
+  fullName!: string | null;
+
   @ApiProperty({ enum: Role, example: Role.STUDENT })
   role!: Role;
 

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { JwtUser } from '../auth/interfaces/jwt-user.interface';
 import { AdminOverviewDto } from './admin-overview.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserResponseDto } from './user-response.dto';
 import { UsersService } from './users.service';
 
@@ -42,5 +43,18 @@ export class UsersController {
   @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT bearer token.' })
   me(@CurrentUser() user: JwtUser): Promise<UserResponseDto> {
     return this.usersService.findProfileById(user.sub);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update the authenticated user profile.' })
+  @ApiOkResponse({ description: 'Authenticated user profile updated.', type: UserResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid JWT bearer token.' })
+  updateMe(
+    @CurrentUser() user: JwtUser,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.updateProfile(user.sub, updateProfileDto);
   }
 }
