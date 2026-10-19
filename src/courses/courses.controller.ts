@@ -27,6 +27,8 @@ import { Role } from '@prisma/client';
 import { CourseDto, CourseEnrollmentDto } from './course.dto';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
+import { ReviewCompletionDto, ReviewFinalTestDto } from './dto/review-completion.dto';
+import { SubmitFinalTestDto } from './dto/submit-final-test.dto';
 import { UpdateCourseStatusDto } from './dto/update-course-status.dto';
 
 @ApiTags('Courses')
@@ -97,6 +99,54 @@ export class CoursesController {
     return this.coursesService.submitForReview(user, id);
   }
 
+  @Get('reviews/completions')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MODERATOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'List course completions awaiting instructor review.' })
+  @ApiOkResponse({ description: 'Pending completion reviews loaded.' })
+  getCompletionReviews(@CurrentUser() user: JwtUser) {
+    return this.coursesService.getCompletionReviews(user);
+  }
+
+  @Patch('reviews/completions/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MODERATOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Approve or return a paid-course completion.' })
+  @ApiOkResponse({ description: 'Completion decision saved.' })
+  reviewCompletion(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() input: ReviewCompletionDto,
+  ) {
+    return this.coursesService.reviewCompletion(user, id, input);
+  }
+
+  @Get('reviews/final-tests')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MODERATOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'List paid-course final tests awaiting instructor review.' })
+  @ApiOkResponse({ description: 'Pending final-test reviews loaded.' })
+  getFinalTestReviews(@CurrentUser() user: JwtUser) {
+    return this.coursesService.getFinalTestReviews(user);
+  }
+
+  @Patch('reviews/final-tests/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MODERATOR)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Approve or return a paid-course final test.' })
+  @ApiOkResponse({ description: 'Final-test decision saved.' })
+  reviewFinalTest(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() input: ReviewFinalTestDto,
+  ) {
+    return this.coursesService.reviewFinalTest(user, id, input);
+  }
+
   @Patch('manage/:id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -120,6 +170,32 @@ export class CoursesController {
   @ApiNotFoundResponse({ description: 'Published enrolled course was not found.' })
   findLearningContent(@CurrentUser() user: JwtUser, @Param('slug') slug: string) {
     return this.coursesService.findLearningContent(user, slug);
+  }
+
+  @Post(':slug/lessons/:lessonId/complete')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Mark an enrolled course lesson complete.' })
+  @ApiOkResponse({ description: 'Lesson completion recorded.' })
+  completeLesson(
+    @CurrentUser() user: JwtUser,
+    @Param('slug') slug: string,
+    @Param('lessonId', ParseUUIDPipe) lessonId: string,
+  ) {
+    return this.coursesService.completeLesson(user, slug, lessonId);
+  }
+
+  @Post(':slug/final-test')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Submit an enrolled learner’s final-test answers.' })
+  @ApiOkResponse({ description: 'Final-test score and completion status.' })
+  submitFinalTest(
+    @CurrentUser() user: JwtUser,
+    @Param('slug') slug: string,
+    @Body() input: SubmitFinalTestDto,
+  ) {
+    return this.coursesService.submitFinalTest(user, slug, input);
   }
 
   @Get(':slug')

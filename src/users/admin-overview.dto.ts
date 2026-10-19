@@ -19,6 +19,23 @@ export class AdminOverviewStatsDto {
 
   @ApiProperty({ example: 860 })
   totalXp!: number;
+
+  @ApiProperty({ example: { total: 12, published: 8, pendingReview: 2, completedEnrollments: 40 } })
+  courses!: {
+    total: number;
+    published: number;
+    pendingReview: number;
+    completedEnrollments: number;
+  };
+
+  @ApiProperty({ example: { total: 25, open: 4, inReview: 2, closed: 19 } })
+  tickets!: { total: number; open: number; inReview: number; closed: number };
+
+  @ApiProperty({ example: { active: 3, pendingReview: 1, impressions: 840, clicks: 57 } })
+  ads!: { active: number; pendingReview: number; impressions: number; clicks: number };
+
+  @ApiProperty({ example: 12 })
+  certificatesIssued!: number;
 }
 
 export class RecentStudentDto {

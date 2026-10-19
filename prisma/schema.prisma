@@ -57,6 +57,27 @@ enum TicketStatus {
   REJECTED
 }
 
+enum AdStatus {
+  ACTIVE
+  PENDING_REVIEW
+  REJECTED
+  EXPIRED
+}
+
+enum CourseCompletionStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum FinalTestAttemptStatus {
+  FAILED
+  PASSED
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
 model User {
   id    String @id @default(uuid())
   email String @unique
@@ -73,13 +94,23 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  submissions       Submission[]
-  coursesCreated    Course[]               @relation("CourseCreator")
-  coursesApproved   Course[]               @relation("CourseApprover")
-  courseEnrollments CourseEnrollment[]
-  coursesPublished  Course[]               @relation("CoursePublisher")
-  supportTickets    SupportTicket[]        @relation("SupportTicketRequester")
-  ticketMessages    SupportTicketMessage[] @relation("SupportTicketMessageSender")
+  submissions               Submission[]
+  coursesCreated            Course[]                 @relation("CourseCreator")
+  coursesApproved           Course[]                 @relation("CourseApprover")
+  courseEnrollments         CourseEnrollment[]
+  coursesPublished          Course[]                 @relation("CoursePublisher")
+  courseCertificates        CourseCertificate[]
+  courseLessonCompletions   CourseLessonCompletion[]
+  finalTestAttempts         CourseFinalTestAttempt[]
+  courseCompletionReviews   CourseCompletionReview[] @relation("CompletionRequester")
+  reviewedCourseCompletions CourseCompletionReview[] @relation("CompletionReviewer")
+  reviewedFinalTestAttempts CourseFinalTestAttempt[] @relation("FinalTestReviewer")
+  createdAds                AdCampaign[]             @relation("AdCreator")
+  proposedAds               AdCampaign[]             @relation("AdProposer")
+  approvedAds               AdCampaign[]             @relation("AdApprover")
+  adEvents                  AdEvent[]
+  supportTickets            SupportTicket[]          @relation("SupportTicketRequester")
+  ticketMessages            SupportTicketMessage[]   @relation("SupportTicketMessageSender")
 
   @@map("users")
 }
@@ -125,6 +156,7 @@ model Course {
   level                   String
   isFree                  Boolean                 @default(true) @map("is_free")
   priceCents              Int?                    @map("price_cents")
+  passingScore            Int                     @default(70) @map("passing_score")
   status                  CourseStatus            @default(DRAFT)
   practicalPlatformStatus PracticalPlatformStatus @default(NOT_REQUESTED) @map("practical_platform_status")
   instructorId            String?                 @map("instructor_id")
@@ -135,11 +167,15 @@ model Course {
   createdAt               DateTime                @default(now()) @map("created_at")
   updatedAt               DateTime                @updatedAt @map("updated_at")
 
-  instructor  User?              @relation("CourseCreator", fields: [instructorId], references: [id], onDelete: SetNull)
-  approvedBy  User?              @relation("CourseApprover", fields: [approvedById], references: [id], onDelete: SetNull)
-  publishedBy User?              @relation("CoursePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
-  enrollments CourseEnrollment[]
-  lessons     CourseLesson[]
+  instructor        User?                    @relation("CourseCreator", fields: [instructorId], references: [id], onDelete: SetNull)
+  approvedBy        User?                    @relation("CourseApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  publishedBy       User?                    @relation("CoursePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+  enrollments       CourseEnrollment[]
+  lessons           CourseLesson[]
+  finalQuestions    CourseFinalQuestion[]
+  certificates      CourseCertificate[]
+  completionReviews CourseCompletionReview[]
+  finalTestAttempts CourseFinalTestAttempt[]
 
   @@index([status])
   @@map("courses")
@@ -155,8 +191,9 @@ model CourseLesson {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  resources CourseResource[]
+  course      Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  resources   CourseResource[]
+  completions CourseLessonCompletion[]
 
   @@unique([courseId, position])
   @@index([courseId, position])
@@ -176,6 +213,93 @@ model CourseResource {
   @@map("course_resources")
 }
 
+model CourseFinalQuestion {
+  id            String @id @default(uuid()) @db.Uuid
+  courseId      String @map("course_id") @db.Uuid
+  prompt        String @db.Text
+  optionA       String @map("option_a") @db.VarChar(1000)
+  optionB       String @map("option_b") @db.VarChar(1000)
+  optionC       String @map("option_c") @db.VarChar(1000)
+  optionD       String @map("option_d") @db.VarChar(1000)
+  correctOption Int    @map("correct_option")
+  position      Int
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, position])
+  @@index([courseId, position])
+  @@map("course_final_questions")
+}
+
+model CourseLessonCompletion {
+  userId      String   @map("user_id")
+  lessonId    String   @map("lesson_id") @db.Uuid
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@id([userId, lessonId])
+  @@index([lessonId])
+  @@map("course_lesson_completions")
+}
+
+model CourseCertificate {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id")
+  courseId      String   @map("course_id") @db.Uuid
+  recipientName String   @map("recipient_name") @db.VarChar(160)
+  code          String   @unique @db.VarChar(32)
+  issuedAt      DateTime @default(now()) @map("issued_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId, issuedAt])
+  @@map("course_certificates")
+}
+
+model CourseFinalTestAttempt {
+  id             String                 @id @default(uuid()) @db.Uuid
+  userId         String                 @map("user_id")
+  courseId       String                 @map("course_id") @db.Uuid
+  answers        Json
+  score          Int
+  status         FinalTestAttemptStatus
+  reviewFeedback String?                @map("review_feedback") @db.Text
+  reviewedById   String?                @map("reviewed_by_id")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  reviewedAt     DateTime?              @map("reviewed_at")
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  reviewedBy User?  @relation("FinalTestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([courseId, status, createdAt])
+  @@index([userId, courseId, createdAt])
+  @@map("course_final_test_attempts")
+}
+
+model CourseCompletionReview {
+  id           String                 @id @default(uuid()) @db.Uuid
+  userId       String                 @map("user_id")
+  courseId     String                 @map("course_id") @db.Uuid
+  status       CourseCompletionStatus @default(PENDING_REVIEW)
+  feedback     String?                @db.Text
+  reviewedById String?                @map("reviewed_by_id")
+  createdAt    DateTime               @default(now()) @map("created_at")
+  reviewedAt   DateTime?              @map("reviewed_at")
+
+  user       User   @relation("CompletionRequester", fields: [userId], references: [id], onDelete: Cascade)
+  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  reviewedBy User?  @relation("CompletionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, courseId])
+  @@index([courseId, status, createdAt])
+  @@map("course_completion_reviews")
+}
+
 model CourseEnrollment {
   userId     String           @map("user_id")
   courseId   String           @map("course_id") @db.Uuid
@@ -188,6 +312,46 @@ model CourseEnrollment {
   @@id([userId, courseId])
   @@index([courseId])
   @@map("course_enrollments")
+}
+
+model AdCampaign {
+  id             String   @id @default(uuid()) @db.Uuid
+  title          String   @db.VarChar(160)
+  imageUrl       String   @map("image_url") @db.VarChar(2048)
+  targetUrl      String   @map("target_url") @db.VarChar(2048)
+  status         AdStatus
+  startsAt       DateTime @map("starts_at")
+  endsAt         DateTime @map("ends_at")
+  durationDays   Int      @map("duration_days")
+  proposedById   String?  @map("proposed_by_id")
+  createdById    String   @map("created_by_id")
+  approvedById   String?  @map("approved_by_id")
+  reviewFeedback String?  @map("review_feedback") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  proposedBy User?     @relation("AdProposer", fields: [proposedById], references: [id], onDelete: SetNull)
+  createdBy  User      @relation("AdCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  approvedBy User?     @relation("AdApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  events     AdEvent[]
+
+  @@index([status, startsAt, endsAt])
+  @@index([proposedById, createdAt])
+  @@map("ad_campaigns")
+}
+
+model AdEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  adId      String   @map("ad_id") @db.Uuid
+  userId    String?  @map("user_id")
+  type      String   @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ad   AdCampaign @relation(fields: [adId], references: [id], onDelete: Cascade)
+  user User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([adId, type, createdAt])
+  @@map("ad_events")
 }
 
 model SupportTicket {

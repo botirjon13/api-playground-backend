@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
+import { CourseCompletionStatus, EnrollmentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { QueryChallengesDto } from './dto/query-challenges.dto';
@@ -32,14 +33,7 @@ export class ChallengesService {
   }
 
   async findAll(query: QueryChallengesDto): Promise<PaginatedResult> {
-    const {
-      page = 1,
-      limit = 10,
-      difficulty,
-      category,
-      search,
-      sort = 'desc',
-    } = query;
+    const { page = 1, limit = 10, difficulty, category, search, sort = 'desc' } = query;
 
     // Build dynamic where condition
     const where: Prisma.ChallengeWhereInput = {
@@ -139,7 +133,7 @@ export class ChallengesService {
 
     return { message: 'Challenge deleted successfully' };
   }
-    async completeMission1(userId: string) {
+  async completeMission1(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -168,6 +162,45 @@ export class ChallengesService {
         },
       },
     });
+
+    const course = await this.prisma.course.findFirst({
+      where: { slug: 'rest-api-basics', status: 'PUBLISHED' },
+      select: {
+        id: true,
+        isFree: true,
+        finalQuestions: { select: { id: true } },
+        enrollments: {
+          where: { userId },
+          select: { status: true },
+        },
+      },
+    });
+    if (course && course.enrollments.length > 0 && course.finalQuestions.length === 0) {
+      if (course.isFree) {
+        await this.prisma.$transaction(async (transaction) => {
+          await transaction.courseEnrollment.update({
+            where: { userId_courseId: { userId, courseId: course.id } },
+            data: { status: EnrollmentStatus.COMPLETED },
+          });
+          await transaction.courseCertificate.upsert({
+            where: { userId_courseId: { userId, courseId: course.id } },
+            create: {
+              userId,
+              courseId: course.id,
+              recipientName: user.fullName?.trim() || 'OsonTrack tinglovchisi',
+              code: randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase(),
+            },
+            update: {},
+          });
+        });
+      } else {
+        await this.prisma.courseCompletionReview.upsert({
+          where: { userId_courseId: { userId, courseId: course.id } },
+          create: { userId, courseId: course.id },
+          update: { status: CourseCompletionStatus.PENDING_REVIEW },
+        });
+      }
+    }
 
     return {
       success: true,

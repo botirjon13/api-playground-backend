@@ -49,6 +49,8 @@ api-playground-backend/
 - Render deployment-friendly production start command.
 - Authenticated support tickets, ticket conversations, and instructor applications with administrator review.
 - Moderator-managed course drafts, lesson materials, and administrator-controlled publication.
+- Course lesson completion, final-test scoring, completion reviews, and verifiable certificates.
+- Time-limited administrator advertisements, moderator proposals, impression/click tracking, and admin overview analytics.
 
 ## API Endpoints
 
@@ -73,6 +75,22 @@ Moderators can create and edit their own draft courses, add ordered lesson text,
 Administrators can approve a submitted course, return it for changes with feedback, and publish an approved course as a separate action. Only published courses appear in the public course list. Lesson text and resource links are returned only to enrolled learners.
 
 Course management endpoints are under `/courses/manage`: staff can list manageable courses, moderators can create/edit/submit drafts, and administrators can update review status. Public course detail is available at `GET /courses/:slug`; enrolled course lessons are available at `GET /courses/:slug/content`.
+
+### Course Completion and Certificates
+
+Moderators can configure an optional final test and its passing score while creating a course. An enrolled learner completes every lesson before submitting the final test. Free courses issue a certificate automatically when the learner passes, or when all lessons are complete if there is no final test. Paid-course completion remains subject to the course moderator's approval; paid enrollment and payment processing are not enabled yet.
+
+Learners can list their certificates at `GET /certificates/mine`, and anyone can verify a certificate using `GET /certificates/verify/:code`. Moderators review paid-course completion requests at `/courses/reviews/completions` and paid final-test attempts at `/courses/reviews/final-tests`.
+
+For the legacy `rest-api-basics` course, learners whose existing `mission1` completion flag is true when this migration runs receive a certificate automatically. Their enrollment is marked completed as part of the backfill. Since the legacy flow did not store the mission completion timestamp, the certificate issue date is the migration date.
+
+Certificates save the recipient name at issue time so later profile edits do not silently change the issued document. Learners can open the certificate from their account and use **PDF sifatida saqlash**; the browser print dialog lets them save an A4 landscape PDF. Its QR code opens the public certificate verification page.
+
+### Advertisements and Analytics
+
+Administrators can create active advertisements with an image URL, destination URL, and duration. Moderators can submit proposals that remain hidden until an administrator approves them. Active advertisements are listed at `GET /ads/active`; the frontend reports impressions and clicks to `POST /ads/:id/events`. Expired advertisements are removed from the active list and marked expired when the active-ad or staff-management endpoints are queried.
+
+Administrators manage advertisements at `/ads/manage`, approve or reject moderator proposals at `/ads/manage/:id/review`, and see campaign impression/click totals in the admin overview. The administrator overview also includes course publication/completion, ticket status, and certificate totals.
 
 ## Installation
 
